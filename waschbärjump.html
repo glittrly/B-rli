@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Waschbär Jump</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #87CEEB;
+            font-family: Arial, sans-serif;
+        }
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+<canvas id="gameCanvas"></canvas>
+
+<script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    const raccoonImage = new Image();
+    raccoonImage.src = 'https://www.jagd-bayern.de/wp-content/uploads/2019/01/Waschba%CC%88r_EricIssele%CC%81e_Fotolia_L.jpg'; // Ersetze dies durch den Pfad zu deinem Waschbär-Bild
+
+    const platformImage = new Image();
+    platformImage.src = 'https://example.com/platform.png'; // Ersetze dies durch den Pfad zu deinem Plattform-Bild
+
+    let raccoon = {
+        x: canvas.width / 2 - 25,
+        y: canvas.height - 150,
+        width: 50,
+        height: 50,
+        speed: 5,
+        dx: 0,
+        dy: 0,
+        gravity: 0.8,
+        jumpPower: -15
+    };
+
+    let platforms = [];
+    const platformCount = 7;
+    for (let i = 0; i < platformCount; i++) {
+        platforms.push({
+            x: Math.random() * (canvas.width - 70),
+            y: i * (canvas.height / platformCount),
+            width: 70,
+            height: 20
+        });
+    }
+
+    let score = 0;
+    let gameOver = false;
+
+    function drawRaccoon() {
+        ctx.drawImage(raccoonImage, raccoon.x, raccoon.y, raccoon.width, raccoon.height);
+    }
+
+    function drawPlatforms() {
+        platforms.forEach(platform => {
+            ctx.drawImage(platformImage, platform.x, platform.y, platform.width, platform.height);
+        });
+    }
+
+    function clear() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+
+    function moveRaccoon() {
+        raccoon.y += raccoon.dy;
+        raccoon.dy += raccoon.gravity;
+
+        if (raccoon.y + raccoon.height > canvas.height) {
+            gameOver = true;
+        }
+
+        if (raccoon.x < 0) raccoon.x = 0;
+        if (raccoon.x + raccoon.width > canvas.width) raccoon.x = canvas.width - raccoon.width;
+
+        platforms.forEach(platform => {
+            if (
+                raccoon.dy > 0 &&
+                raccoon.x < platform.x + platform.width &&
+                raccoon.x + raccoon.width > platform.x &&
+                raccoon.y + raccoon.height > platform.y &&
+                raccoon.y + raccoon.height < platform.y + platform.height
+            ) {
+                raccoon.dy = raccoon.jumpPower;
+                score++;
+            }
+        });
+
+        if (raccoon.y < canvas.height / 2) {
+            platforms.forEach(platform => {
+                platform.y -= raccoon.dy;
+                if (platform.y > canvas.height) {
+                    platform.y = 0;
+                    platform.x = Math.random() * (canvas.width - platform.width);
+                }
+            });
+        }
+    }
+
+    function update() {
+        if (!gameOver) {
+            clear();
+            drawRaccoon();
+            drawPlatforms();
+            moveRaccoon();
+            requestAnimationFrame(update);
+        } else {
+            ctx.font = '48px serif';
+            ctx.fillText('Game Over', canvas.width / 2 - 100, canvas.height / 2);
+            ctx.fillText(`Score: ${score}`, canvas.width / 2 - 100, canvas.height / 2 + 50);
+        }
+    }
+
+    function startGame() {
+        update();
+    }
+
+    window.addEventListener('deviceorientation', event => {
+        let tilt = event.gamma;
+        raccoon.dx = tilt / 2;
+        raccoon.x += raccoon.dx;
+    });
+
+    window.addEventListener('load', startGame);
+</script>
+</body>
+</html>
